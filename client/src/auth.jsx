@@ -3,7 +3,7 @@ const Auth=createContext(null);
 export const useAuth=()=>useContext(Auth);
 export async function request(path,options={}){
  const token=localStorage.getItem('portfolio_token');
- const response=await fetch('/api'+path,{...options,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...options.headers}});
+ const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api${path}`, { ...options, headers: { 'Content-Type': 'application/json', ...options.headers, ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
  const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'Request failed');return data;
 }
 export function AuthProvider({children}){

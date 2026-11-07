@@ -19,7 +19,7 @@ export default function Contact() {
     e.preventDefault();
     setStatus('Sending...');
     try {
-      const response = await fetch('/api/contacts', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/contacts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ firstname: formData.firstName, lastname: formData.lastName, contactNumber: formData.contactNumber, email: formData.email, message: formData.message })
