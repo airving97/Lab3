@@ -1,0 +1,5 @@
+import React,{useEffect,useState} from 'react';
+import {request} from '../auth';
+import proj1 from '../assets/project1.jpg';import proj2 from '../assets/project2.jpg';import proj3 from '../assets/project3.jpg';
+const featured=[{title:'Real Estate Web Application',description:'Interactive property listings and responsive layouts',image:proj1},{title:'Pacific Trails Resort Portal',description:'Responsive resort website and interface design',image:proj2},{title:'Linux XAMPP Web Stack',description:'Apache and MySQL development environment',image:proj3}];
+export default function Projects(){const [items,setItems]=useState([]);const [error,setError]=useState('');useEffect(()=>{request('/projects').then(setItems).catch(e=>setError(e.message))},[]);return <section><h1>Featured Projects</h1><p role="alert">{error}</p><div className="project-grid">{[...featured,...items].map((item,i)=><article key={item._id||i}>{item.image&&<img src={item.image} alt={item.title}/>}<h3>{item.title}</h3><p>{item.description}</p></article>)}</div></section>}

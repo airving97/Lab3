@@ -1,0 +1,3 @@
+import React,{useEffect,useState} from 'react';
+import {request} from '../auth';
+export default function Education(){const [items,setItems]=useState([]);const [error,setError]=useState('');useEffect(()=>{request('/qualifications').then(setItems).catch(e=>setError(e.message))},[]);return <section><h1>Education & Qualifications</h1><p role="alert">{error}</p><div className="entry-list">{items.length?items.map(item=><article key={item._id}><h3>{item.title}</h3><p>{item.description}</p>{item.completion&&<small>{new Date(item.completion).toLocaleDateString()}</small>}</article>):!error&&<article><h3>Software Engineering Technology</h3><p>Centennial College</p></article>}</div></section>}
