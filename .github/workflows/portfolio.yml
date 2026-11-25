@@ -1,0 +1,38 @@
+name: Portfolio tests
+on: [push, pull_request]
+jobs:
+  portfolio:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports: ['27017:27017']
+    env:
+      MONGODB_URI: mongodb://127.0.0.1:27017/portfolio_ci
+      JWT_SECRET: disposable-ci-only-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci && npm --prefix client ci
+      - name: Home component unit test
+        working-directory: client
+        run: node --test test/home.test.mjs
+      - run: npm run build
+      - name: Seed a project in the CI database
+        run: node --input-type=module -e "import mongoose from 'mongoose'; await mongoose.connect(process.env.MONGODB_URI); await mongoose.connection.collection('projects').insertOne({title:'CI portfolio project',description:'Test fixture'}); await mongoose.disconnect();"
+      - name: Run portfolio and Cypress
+        run: |
+          npm run dev > "$RUNNER_TEMP/portfolio.log" 2>&1 &
+          curl --retry 30 --retry-delay 2 --retry-connrefused -fsS http://localhost:5173/ > /dev/null
+          curl --retry 30 --retry-delay 2 --retry-connrefused -fsS http://localhost:5000/api/projects > /dev/null
+          cd client
+          npx --yes --package=cypress@14.5.4 cypress run --browser chrome
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cypress-evidence
+          path: |
+            client/cypress/screenshots
+            client/cypress/videos
