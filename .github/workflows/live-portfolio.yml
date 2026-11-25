@@ -1,0 +1,42 @@
+name: Capture hosted portfolio
+on: [push, workflow_dispatch]
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --prefix "$RUNNER_TEMP/capture" playwright
+      - run: "$RUNNER_TEMP/capture/node_modules/.bin/playwright" install chromium
+      - name: Inspect live portfolio
+        working-directory: ${{ runner.temp }}/capture
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/live-evidence"
+          node --input-type=module <<'JS'
+          import { chromium } from 'playwright';
+          const browser = await chromium.launch();
+          const root = 'https://lab3-beta-ashen.vercel.app/';
+          const dir = process.env.GITHUB_WORKSPACE + '/live-evidence';
+          const ctx = await browser.newContext({viewport:{width:1280,height:800},recordVideo:{dir}});
+          const page = await ctx.newPage();
+          try {
+            const home = await page.goto(root);
+            console.log('Home HTTP',home.status(),'title',await page.title());
+            await page.screenshot({path:dir+'/home.png'});
+            await page.getByRole('heading',{name:'Welcome to My Personal Portfolio'}).waitFor({timeout:10000});
+            const projectData = page.waitForResponse(r=>new URL(r.url()).pathname.endsWith('/api/projects'),{timeout:15000});
+            await page.getByRole('link',{name:'View Projects'}).click();
+            const response = await projectData;
+            await page.getByRole('heading',{name:'Featured Projects'}).waitFor();
+            await page.screenshot({path:dir+'/projects.png'});
+            console.log('Projects API',response.status(),response.headers()['content-type']);
+            if (!response.ok() || !Array.isArray(await response.json())) throw Error('Hosted Projects API must return a JSON list');
+          } finally { await ctx.close(); await browser.close(); }
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hosted-portfolio-evidence
+          path: live-evidence
