@@ -9,7 +9,8 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --prefix "$RUNNER_TEMP/capture" playwright
-      - run: "$RUNNER_TEMP/capture/node_modules/.bin/playwright" install chromium
+      - run: |
+          "$RUNNER_TEMP/capture/node_modules/.bin/playwright" install chromium
       - name: Inspect live portfolio
         working-directory: ${{ runner.temp }}/capture
         run: |
